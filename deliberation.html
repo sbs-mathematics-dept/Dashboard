@@ -345,7 +345,7 @@ function render(){
     if(activeTab!=="all" && groupOf(c.status)!==activeTab) return false;
     if(fy && c.yearLevel!==fy) return false;
     if(fs && c.status!==fs) return false;
-    if(q){var hay=(c.studentName+" "+c.fullName+" "+c.reasonDetail+" "+c.feedback).toLowerCase();if(hay.indexOf(q)<0)return false;}
+    if(q){var hay=(c.studentName+" "+c.fullName+" "+c.reasonDetail+" "+(c.reasons||[]).join(" ")+" "+c.feedback).toLowerCase();if(hay.indexOf(q)<0)return false;}
     return true;
   });
   list.sort(function(a,b){
@@ -365,7 +365,7 @@ function render(){
       +'<td><div class="std"><div class="av" style="background:'+avColor(c.studentName)+'">'+esc(initials(c.studentName)).toUpperCase()+'</div>'
         +'<div><div class="nm">'+esc(c.studentName)+'</div>'+full+'</div></div></td>'
       +'<td><span class="yr-pill">'+esc(c.yearLevel||"—")+'</span></td>'
-      +'<td class="cell-why">'+esc(c.reasonDetail||"—")+'</td>'
+      +'<td class="cell-why">'+esc(c.reasonDetail || ((c.reasons&&c.reasons.length)?c.reasons.join(", "):"") || "—")+'</td>'
       +'<td class="cell-fb">'+esc(c.feedback||"—")+'</td>'
       +'<td><span class="grade" style="color:'+gc+'">'+gl+' <small>('+esc(c.currentGrade)+'%)</small></span></td>'
       +'<td><span class="run">'+esc(c.runningAverage)+'%</span></td>'
@@ -404,7 +404,7 @@ function editCase(id){location.href="deliberation-form.html?id="+encodeURICompon
 function delCase(id){var c=cases.find(function(x){return x.id===id;});if(!c)return;if(!confirm('Delete the deliberation case for '+c.studentName+'?'))return;cases=cases.filter(function(x){return x.id!==id;});save();render();}
 
 /* ---- progress chart (plots only quarters that have a grade) ---- */
-function qn(v){ if(v===null||v===undefined||v===""||v==="N/A")return null; var f=parseFloat(v); return isNaN(f)?null:f; }
+function qn(v){ if(v===null||v===undefined||v===""||v==="N/A")return null; var f=parseFloat(v); return (isNaN(f)||f===0)?null:f; }
 function chartSVG(vals){
   var W=440,H=155,pad=30,n=4;
   var xs=function(i){return pad+ i*((W-pad*2)/(n-1));};
