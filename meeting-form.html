@@ -209,7 +209,7 @@ document.querySelectorAll('.nav-item[data-key]').forEach(function(el){el.addEven
 function toggleNav(o){var a=document.getElementById('app');if(o===undefined)o=!a.classList.contains('nav-open');a.classList.toggle('nav-open',o);}
 function goBack(){location.href="minutes.html";}
 
-var STORE_KEY="sbs_meetings_v1";
+var STORE_KEY="sbs_meetings_v2";
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function initials(n){var w=(n||"?").trim().split(/\s+/);return (((w[0]||"")[0]||"")+((w[1]||"")[0]||"")).toUpperCase();}
 var AVCOL=["#4f6bf6","#ef6aa0","#12b981","#7c5cf0","#f0954a","#2ba3e3","#e0546f","#e0a92a"];

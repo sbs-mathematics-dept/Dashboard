@@ -241,7 +241,7 @@ var PORTAL_LINKS={dashboard:"index.html",lesson:"lesson-tracker.html",deliberati
 document.querySelectorAll('.nav-item[data-key]').forEach(function(el){el.addEventListener('click',function(){var u=PORTAL_LINKS[el.getAttribute('data-key')]||"#";if(u&&u!=="#"&&u!=="minutes.html")location.href=u;toggleNav(false);});});
 function toggleNav(o){var a=document.getElementById('app');if(o===undefined)o=!a.classList.contains('nav-open');a.classList.toggle('nav-open',o);}
 
-var STORE_KEY="sbs_meetings_v1";
+var STORE_KEY="sbs_meetings_v2";
 var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 var WD=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 function fmtDate(s){if(!s)return"—";var p=s.split("-");return (+p[2])+" "+MON[+p[1]-1]+" "+p[0];}
@@ -301,7 +301,7 @@ function seed(){
   ];
 }
 var meetings=[];
-function load(){try{var raw=localStorage.getItem(STORE_KEY);if(raw){meetings=JSON.parse(raw);return;}}catch(e){}meetings=seed();save();}
+function load(){try{var raw=localStorage.getItem(STORE_KEY);if(raw){meetings=JSON.parse(raw);return;}}catch(e){}meetings=[];save();}
 function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(meetings));}catch(e){}}
 
 var showAll=false;

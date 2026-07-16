@@ -260,7 +260,7 @@ document.querySelectorAll('.nav-item[data-key]').forEach(function(el){el.addEven
 function toggleNav(o){var a=document.getElementById('app');if(o===undefined)o=!a.classList.contains('nav-open');a.classList.toggle('nav-open',o);}
 
 /* ---- shared config ---- */
-var STORE_KEY="sbs_deliberation_cases_v1";
+var STORE_KEY="sbs_deliberation_cases_v2";
 var STATUS={
   immediate:{label:"Immediate Action",color:"#dc2626",bg:"#fde6e6",group:"attention"},
   attention:{label:"Needs Attention",color:"#e11d5c",bg:"#fde8ee",group:"attention"},
@@ -306,7 +306,7 @@ function seed(){
   };});
 }
 var cases=[];
-function load(){try{var raw=localStorage.getItem(STORE_KEY);if(raw){cases=JSON.parse(raw);return;}}catch(e){}cases=seed();save();}
+function load(){try{var raw=localStorage.getItem(STORE_KEY);if(raw){cases=JSON.parse(raw);return;}}catch(e){}cases=[];save();}
 function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(cases));}catch(e){}}
 
 /* ---- filters state ---- */

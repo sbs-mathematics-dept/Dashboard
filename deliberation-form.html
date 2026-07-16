@@ -283,7 +283,7 @@ document.querySelectorAll('.nav-item[data-key]').forEach(function(el){el.addEven
 function toggleNav(o){var a=document.getElementById('app');if(o===undefined)o=!a.classList.contains('nav-open');a.classList.toggle('nav-open',o);}
 function goBack(){location.href="deliberation.html";}
 
-var STORE_KEY="sbs_deliberation_cases_v1";
+var STORE_KEY="sbs_deliberation_cases_v2";
 function gColor(p){p=+p;if(p>=70)return"#16a34a";if(p>=60)return"#b8860b";if(p>=50)return"#ea580c";return"#dc2626";}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
