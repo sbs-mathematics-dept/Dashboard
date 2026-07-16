@@ -196,7 +196,7 @@ a{text-decoration:none;color:inherit;} img{display:block;max-width:100%;} svg{di
       <!-- 3. Academic Performance -->
       <div class="fsec">
         <div class="fsec-head"><div class="fsec-num">3</div><div><h3>Academic Performance</h3><p>The most important section — enter the latest figures. Percentages are 0–100.</p></div></div>
-        <div class="quarters-lbl">Quarter grades <span class="opt">— enter these; the current grade and running average fill in automatically</span></div>
+        <div class="quarters-lbl">Quarter grades <span class="opt">— enter the ones that are graded. Blank, 0, or N/A quarters aren't counted; the current grade and running average fill in from the rest.</span></div>
         <div class="grid4">
           <div class="field"><label>Quarter 1 <span class="na-btn" id="na-f-q1" onclick="toggleNA('f-q1')">N/A</span></label><div class="suffix"><input id="f-q1" type="number" min="0" max="100" placeholder="64" oninput="recalc()"><span class="pc">%</span></div></div>
           <div class="field"><label>Quarter 2 <span class="na-btn" id="na-f-q2" onclick="toggleNA('f-q2')">N/A</span></label><div class="suffix"><input id="f-q2" type="number" min="0" max="100" placeholder="58" oninput="recalc()"><span class="pc">%</span></div></div>
@@ -282,7 +282,7 @@ a{text-decoration:none;color:inherit;} img{display:block;max-width:100%;} svg{di
 </div>
 
 <script>
-var PORTAL_LINKS={dashboard:"index.html",lesson:"lesson-tracker.html",deliberation:"deliberation.html",minutes:"minutes.html",material:"#",resources:"shared-resources.html",events:"events.html",teachers:"#",settings:"#"};
+var PORTAL_LINKS={dashboard:"index.html",lesson:"lesson-tracker.html",deliberation:"deliberation.html",minutes:"minutes.html",material:"material.html",resources:"shared-resources.html",events:"events.html",teachers:"#",settings:"#"};
 document.querySelectorAll('.nav-item[data-key]').forEach(function(el){el.addEventListener('click',function(){var u=PORTAL_LINKS[el.getAttribute('data-key')]||"#";if(u&&u!=="#")location.href=u;});});
 function toggleNav(o){var a=document.getElementById('app');if(o===undefined)o=!a.classList.contains('nav-open');a.classList.toggle('nav-open',o);}
 function goBack(){location.href="deliberation.html";}
@@ -313,7 +313,7 @@ function toggleNA(id){
   else { inp.disabled=false; btn.classList.remove('on'); }
   recalc();
 }
-function qval(id){ if(naState[id]) return null; var v=parseFloat(document.getElementById(id).value); return isNaN(v)?null:v; }
+function qval(id){ if(naState[id]) return null; var v=parseFloat(document.getElementById(id).value); return (isNaN(v)||v===0)?null:v; }
 function recalc(){
   var q=[qval('f-q1'),qval('f-q2'),qval('f-q3'),qval('f-q4')];
   var filled=q.filter(function(v){return v!==null;});
@@ -393,7 +393,7 @@ function markChips(cid,store){document.getElementById(cid).querySelectorAll('.ch
 
 /* save */
 function val(id){return (document.getElementById(id).value||"").trim();}
-function qStore(id){return naState[id] ? "N/A" : val(id);}
+function qStore(id){ if(naState[id])return "N/A"; var v=val(id); return (v!==""&&parseFloat(v)===0)?"":v; }
 function saveReport(){
   var msg=document.getElementById('formMsg');
   var name=val('f-name'), year=val('f-year');

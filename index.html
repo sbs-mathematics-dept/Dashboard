@@ -466,7 +466,7 @@ svg{display:block;}
       <div class="stat">
         <div class="stat-top">
           <div class="stat-ic ic-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5Z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/></svg></div>
-          <div><div class="num">0</div><div class="name">Material Requests</div><div class="sub">Pending approval</div></div>
+          <div><div class="num" id="stMaterial">0</div><div class="name">Material Requests</div><div class="sub">Pending approval</div></div>
         </div>
         <div class="bar"><i style="width:0%;background:var(--gold)"></i></div>
       </div>
@@ -569,7 +569,7 @@ var PORTAL_LINKS = {
   lesson:       "lesson-tracker.html",   // your Years 7–13 lesson tracker
   deliberation:"deliberation.html",
   minutes:      "minutes.html",
-  material:     "#",
+  material:     "material.html",
   resources:    "shared-resources.html",
   events:       "events.html",
   teachers:     "#",
@@ -625,6 +625,10 @@ document.querySelectorAll('#sidebar .nav-item').forEach(function(n){
   function fmtTime(t){if(!t)return"";var p=t.split(":");var h=+p[0],m=p[1],ap=h<12?"AM":"PM";h=h%12||12;return h+":"+m+" "+ap;}
 
   // Student deliberations (open = not resolved)
+  var mats = ls('sbs_material_requests_v1') || [];
+  var pend = mats.filter(function(m){return m.status==='pending';}).length;
+  var mEl = document.getElementById('stMaterial'); if(mEl) mEl.textContent = pend;
+
   var cases = ls('sbs_deliberation_cases_v2') || [];
   var open = cases.filter(function(c){return c.status!=='resolved';}).length;
   var el = document.getElementById('stDelib'); if(el) el.textContent = open;

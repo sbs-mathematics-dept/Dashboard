@@ -237,7 +237,7 @@ tbody tr:last-child td{border-bottom:none;} tbody tr:hover{background:#f9fafe;}
 <div class="dmodal-ov" id="modal"><div class="dmodal" id="modalCard"></div></div>
 
 <script>
-var PORTAL_LINKS={dashboard:"index.html",lesson:"lesson-tracker.html",deliberation:"deliberation.html",minutes:"minutes.html",material:"#",resources:"shared-resources.html",events:"events.html",teachers:"#",settings:"#"};
+var PORTAL_LINKS={dashboard:"index.html",lesson:"lesson-tracker.html",deliberation:"deliberation.html",minutes:"minutes.html",material:"material.html",resources:"shared-resources.html",events:"events.html",teachers:"#",settings:"#"};
 document.querySelectorAll('.nav-item[data-key]').forEach(function(el){el.addEventListener('click',function(){var u=PORTAL_LINKS[el.getAttribute('data-key')]||"#";if(u&&u!=="#"&&u!=="minutes.html")location.href=u;toggleNav(false);});});
 function toggleNav(o){var a=document.getElementById('app');if(o===undefined)o=!a.classList.contains('nav-open');a.classList.toggle('nav-open',o);}
 

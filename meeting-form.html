@@ -204,7 +204,7 @@ a{text-decoration:none;color:inherit;} img{display:block;max-width:100%;} svg{di
 </div>
 
 <script>
-var PORTAL_LINKS={dashboard:"index.html",lesson:"lesson-tracker.html",deliberation:"deliberation.html",minutes:"minutes.html",material:"#",resources:"shared-resources.html",events:"events.html",teachers:"#",settings:"#"};
+var PORTAL_LINKS={dashboard:"index.html",lesson:"lesson-tracker.html",deliberation:"deliberation.html",minutes:"minutes.html",material:"material.html",resources:"shared-resources.html",events:"events.html",teachers:"#",settings:"#"};
 document.querySelectorAll('.nav-item[data-key]').forEach(function(el){el.addEventListener('click',function(){var u=PORTAL_LINKS[el.getAttribute('data-key')]||"#";if(u&&u!=="#")location.href=u;});});
 function toggleNav(o){var a=document.getElementById('app');if(o===undefined)o=!a.classList.contains('nav-open');a.classList.toggle('nav-open',o);}
 function goBack(){location.href="minutes.html";}
