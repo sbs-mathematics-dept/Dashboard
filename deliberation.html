@@ -403,21 +403,26 @@ document.addEventListener('click',closeMenus);
 function editCase(id){location.href="deliberation-form.html?id="+encodeURIComponent(id);}
 function delCase(id){var c=cases.find(function(x){return x.id===id;});if(!c)return;if(!confirm('Delete the deliberation case for '+c.studentName+'?'))return;cases=cases.filter(function(x){return x.id!==id;});save();render();}
 
-/* ---- progress chart ---- */
+/* ---- progress chart (plots only quarters that have a grade) ---- */
+function qn(v){ if(v===null||v===undefined||v===""||v==="N/A")return null; var f=parseFloat(v); return isNaN(f)?null:f; }
 function chartSVG(vals){
-  var W=440,H=150,pad=30,n=vals.length;
+  var W=440,H=155,pad=30,n=4;
   var xs=function(i){return pad+ i*((W-pad*2)/(n-1));};
-  var ys=function(v){return H-24 - (v/100)*(H-44);};
+  var ys=function(v){return H-26 - (v/100)*(H-46);};
   var labels=["Q1","Q2","Q3","Q4"];
-  var pts=vals.map(function(v,i){return xs(i)+","+ys(v);});
-  var area="M"+xs(0)+","+(H-24)+" L"+pts.join(" L")+" L"+xs(n-1)+","+(H-24)+" Z";
   var grid="";[0,25,50,75,100].forEach(function(g){var y=ys(g);grid+='<line x1="'+pad+'" y1="'+y+'" x2="'+(W-pad)+'" y2="'+y+'" stroke="#e9edf5"/><text x="'+(pad-6)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" fill="#94a1bd">'+g+'</text>';});
-  var dots=vals.map(function(v,i){return '<circle cx="'+xs(i)+'" cy="'+ys(v)+'" r="4.5" fill="#fff" stroke="'+gColor(v)+'" stroke-width="2.5"/><text x="'+xs(i)+'" y="'+(ys(v)-11)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#1e2a4a">'+v+'%</text>';}).join("");
-  var xlab=labels.map(function(l,i){return '<text x="'+xs(i)+'" y="'+(H-6)+'" text-anchor="middle" font-size="10" font-weight="600" fill="#6b7796">'+l+'</text>';}).join("");
-  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" xmlns="http://www.w3.org/2000/svg">'+grid
-    +'<path d="'+area+'" fill="rgba(61,90,245,.10)"/>'
-    +'<polyline points="'+pts.join(" ")+'" fill="none" stroke="#3d5af5" stroke-width="2.5" stroke-linejoin="round"/>'
-    +dots+xlab+'</svg>';
+  var valid=[]; vals.forEach(function(v,i){ if(v!==null) valid.push({x:xs(i),y:ys(v),v:v}); });
+  var area="",line="",dots="";
+  if(valid.length){
+    var poly=valid.map(function(p){return p.x+","+p.y;}).join(" ");
+    line='<polyline points="'+poly+'" fill="none" stroke="#3d5af5" stroke-width="2.5" stroke-linejoin="round"/>';
+    if(valid.length>1){ area='<path d="M'+valid[0].x+','+(H-26)+' '+valid.map(function(p){return 'L'+p.x+','+p.y;}).join(' ')+' L'+valid[valid.length-1].x+','+(H-26)+' Z" fill="rgba(61,90,245,.10)"/>'; }
+    dots=valid.map(function(p){return '<circle cx="'+p.x+'" cy="'+p.y+'" r="4.5" fill="#fff" stroke="'+gColor(p.v)+'" stroke-width="2.5"/><text x="'+p.x+'" y="'+(p.y-11)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#1e2a4a">'+p.v+'%</text>';}).join("");
+  }
+  var xlab=labels.map(function(l,i){ var t='<text x="'+xs(i)+'" y="'+(H-6)+'" text-anchor="middle" font-size="10" font-weight="600" fill="#6b7796">'+l+'</text>';
+    if(vals[i]===null){ t+='<text x="'+xs(i)+'" y="'+(ys(0)-6)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#c2c7d4">N/A</text>'; } return t; }).join("");
+  var empty = valid.length? '' : '<text x="'+(W/2)+'" y="'+((H-26)/2+8)+'" text-anchor="middle" font-size="11" fill="#94a1bd">No quarter grades yet</text>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" xmlns="http://www.w3.org/2000/svg">'+grid+area+line+dots+xlab+empty+'</svg>';
 }
 
 /* ---- view modal ---- */
@@ -427,7 +432,7 @@ function viewCase(id){
   var reasons=(c.reasons&&c.reasons.length)?'<div class="taglist">'+c.reasons.map(function(r){return '<span class="tag">'+esc(r)+'</span>';}).join("")+'</div>':'<div class="para">—</div>';
   var acts=(c.actions&&c.actions.length)?'<div class="taglist">'+c.actions.map(function(r){return '<span class="tag">'+esc(r)+'</span>';}).join("")+(c.actionOther?'<span class="tag">'+esc(c.actionOther)+'</span>':'')+'</div>':'<div class="para">—</div>';
   var atts=(c.attachments&&c.attachments.length)?'<div class="taglist">'+c.attachments.map(function(a){return '<span class="tag">📎 '+esc(a.name)+'</span>';}).join("")+'</div>':'<div class="para">No attachments</div>';
-  var chartVals=[num(c.q1,c.runningAverage),num(c.q2,c.runningAverage),num(c.q3,c.runningAverage),num(c.q4,c.currentGrade)];
+  var chartVals=[qn(c.q1),qn(c.q2),qn(c.q3),qn(c.q4)];
   document.getElementById('viewCard').innerHTML=
     '<div class="dm-head"><div class="av" style="background:'+avColor(c.studentName)+'">'+esc(initials(c.studentName)).toUpperCase()+'</div>'
       +'<div><div class="h-nm">'+esc(c.studentName)+'</div><div class="h-sub">'+esc(c.yearLevel)+(c.fullName?' · '+esc(c.fullName):'')+' · '+esc(c.subject||"Mathematics")+'</div></div>'
@@ -448,7 +453,7 @@ function num(v,f){v=parseFloat(v);return isNaN(v)?(+f||0):v;}
 function sec(title,inner){return '<div class="dm-sec"><h4>'+title+'</h4>'+inner+'</div>';}
 function kv(pairs){return '<div class="kv">'+pairs.map(function(p){return '<div><div class="k">'+p[0]+'</div><div class="v">'+esc(p[1])+'</div></div>';}).join("")+'</div>';}
 function perf(c){
-  function pv(v){return (v!==""&&v!=null)?v+"%":"—";}
+  function pv(v){if(v==="N/A")return "N/A"; return (v!==""&&v!=null)?v+"%":"—";}
   var items=[["Current",pv(c.currentGrade)],["Running Avg",pv(c.runningAverage)],
     ["Homework",pv(c.homeworkAvg)],["Participation",c.participation||"—"],
     ["Q1",pv(c.q1)],["Q2",pv(c.q2)],["Q3",pv(c.q3)],["Q4",pv(c.q4)]];

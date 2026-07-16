@@ -59,6 +59,10 @@ a{text-decoration:none;color:inherit;} img{display:block;max-width:100%;} svg{di
 .field label{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
 .field .opt{font-weight:500;color:var(--muted-2);}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 16px;}
+.na-btn{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.02em;color:var(--muted-2);background:#f2f4fa;border:1px solid var(--line);border-radius:6px;padding:1px 7px;cursor:pointer;margin-left:6px;vertical-align:middle;user-select:none;transition:.15s;}
+.na-btn:hover{border-color:var(--muted-2);color:var(--ink-soft);}
+.na-btn.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.field input:disabled{background:#f2f4fa;color:var(--muted-2);cursor:not-allowed;}
 .auto-field{background:#f2f4fa!important;color:var(--ink)!important;font-weight:800;cursor:default;}
 .quarters-lbl{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:10px;}
 @media (max-width:600px){.grid4{grid-template-columns:1fr 1fr;}}
@@ -194,10 +198,10 @@ a{text-decoration:none;color:inherit;} img{display:block;max-width:100%;} svg{di
         <div class="fsec-head"><div class="fsec-num">3</div><div><h3>Academic Performance</h3><p>The most important section — enter the latest figures. Percentages are 0–100.</p></div></div>
         <div class="quarters-lbl">Quarter grades <span class="opt">— enter these; the current grade and running average fill in automatically</span></div>
         <div class="grid4">
-          <div class="field"><label>Quarter 1</label><div class="suffix"><input id="f-q1" type="number" min="0" max="100" placeholder="64" oninput="recalc()"><span class="pc">%</span></div></div>
-          <div class="field"><label>Quarter 2</label><div class="suffix"><input id="f-q2" type="number" min="0" max="100" placeholder="58" oninput="recalc()"><span class="pc">%</span></div></div>
-          <div class="field"><label>Quarter 3</label><div class="suffix"><input id="f-q3" type="number" min="0" max="100" placeholder="55" oninput="recalc()"><span class="pc">%</span></div></div>
-          <div class="field"><label>Quarter 4</label><div class="suffix"><input id="f-q4" type="number" min="0" max="100" placeholder="—" oninput="recalc()"><span class="pc">%</span></div></div>
+          <div class="field"><label>Quarter 1 <span class="na-btn" id="na-f-q1" onclick="toggleNA('f-q1')">N/A</span></label><div class="suffix"><input id="f-q1" type="number" min="0" max="100" placeholder="64" oninput="recalc()"><span class="pc">%</span></div></div>
+          <div class="field"><label>Quarter 2 <span class="na-btn" id="na-f-q2" onclick="toggleNA('f-q2')">N/A</span></label><div class="suffix"><input id="f-q2" type="number" min="0" max="100" placeholder="58" oninput="recalc()"><span class="pc">%</span></div></div>
+          <div class="field"><label>Quarter 3 <span class="na-btn" id="na-f-q3" onclick="toggleNA('f-q3')">N/A</span></label><div class="suffix"><input id="f-q3" type="number" min="0" max="100" placeholder="55" oninput="recalc()"><span class="pc">%</span></div></div>
+          <div class="field"><label>Quarter 4 <span class="na-btn" id="na-f-q4" onclick="toggleNA('f-q4')">N/A</span></label><div class="suffix"><input id="f-q4" type="number" min="0" max="100" placeholder="—" oninput="recalc()"><span class="pc">%</span></div></div>
         </div>
         <div class="grid3" style="margin-top:14px">
           <div class="field"><label>Current Grade <span class="opt">(auto · latest quarter)</span></label><div class="suffix"><input id="f-current" type="number" class="auto-field" readonly tabindex="-1" placeholder="—"><span class="pc">%</span></div></div>
@@ -301,7 +305,15 @@ buildChips(REASONS,document.getElementById('reasonChips'),selReasons);
 buildChips(ACTIONS,document.getElementById('actionChips'),selActions);
 
 /* auto-calculate running average + current grade, then redraw chart */
-function qval(id){var v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v;}
+var naState={'f-q1':false,'f-q2':false,'f-q3':false,'f-q4':false};
+function toggleNA(id){
+  naState[id]=!naState[id];
+  var inp=document.getElementById(id), btn=document.getElementById('na-'+id);
+  if(naState[id]){ inp.value=''; inp.disabled=true; btn.classList.add('on'); }
+  else { inp.disabled=false; btn.classList.remove('on'); }
+  recalc();
+}
+function qval(id){ if(naState[id]) return null; var v=parseFloat(document.getElementById(id).value); return isNaN(v)?null:v; }
 function recalc(){
   var q=[qval('f-q1'),qval('f-q2'),qval('f-q3'),qval('f-q4')];
   var filled=q.filter(function(v){return v!==null;});
@@ -309,22 +321,30 @@ function recalc(){
   var current=""; for(var i=q.length-1;i>=0;i--){ if(q[i]!==null){current=q[i];break;} }
   document.getElementById('f-running').value = running;
   document.getElementById('f-current').value = current;
-  drawMini(q, running);
+  drawMini(q);
 }
-function drawMini(q, running){
+function drawMini(q){
   q = q || [qval('f-q1'),qval('f-q2'),qval('f-q3'),qval('f-q4')];
-  if(running===undefined){var f=q.filter(function(v){return v!==null;});running=f.length?f.reduce(function(a,b){return a+b;},0)/f.length:0;}
-  var vals=q.map(function(v){return v===null?(running||0):v;});
-  var W=480,H=155,pad=30,n=4;
+  var W=480,H=160,pad=30,n=4;
   var xs=function(i){return pad+i*((W-pad*2)/(n-1));};
-  var ys=function(v){return H-24-(v/100)*(H-44);};
+  var ys=function(v){return H-26-(v/100)*(H-46);};
   var labels=["Q1","Q2","Q3","Q4"];
-  var pts=vals.map(function(v,i){return xs(i)+","+ys(v);});
   var grid="";[0,25,50,75,100].forEach(function(gg){var y=ys(gg);grid+='<line x1="'+pad+'" y1="'+y+'" x2="'+(W-pad)+'" y2="'+y+'" stroke="#e9edf5"/><text x="'+(pad-6)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" fill="#94a1bd">'+gg+'</text>';});
-  var area="M"+xs(0)+","+(H-24)+" L"+pts.join(" L")+" L"+xs(n-1)+","+(H-24)+" Z";
-  var dots=vals.map(function(v,i){return '<circle cx="'+xs(i)+'" cy="'+ys(v)+'" r="4.5" fill="#fff" stroke="'+gColor(v)+'" stroke-width="2.5"/><text x="'+xs(i)+'" y="'+(ys(v)-11)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#1e2a4a">'+Math.round(v)+'%</text>';}).join("");
-  var xlab=labels.map(function(l,i){return '<text x="'+xs(i)+'" y="'+(H-6)+'" text-anchor="middle" font-size="10" font-weight="600" fill="#6b7796">'+l+'</text>';}).join("");
-  document.getElementById('miniChart').innerHTML='<svg viewBox="0 0 '+W+' '+H+'" width="100%" xmlns="http://www.w3.org/2000/svg">'+grid+'<path d="'+area+'" fill="rgba(61,90,245,.10)"/><polyline points="'+pts.join(" ")+'" fill="none" stroke="#3d5af5" stroke-width="2.5" stroke-linejoin="round"/>'+dots+xlab+'</svg>';
+  var valid=[]; q.forEach(function(v,i){ if(v!==null) valid.push({x:xs(i),y:ys(v),v:v}); });
+  var area="",line="",dots="";
+  if(valid.length){
+    var poly=valid.map(function(p){return p.x+","+p.y;}).join(" ");
+    line='<polyline points="'+poly+'" fill="none" stroke="#3d5af5" stroke-width="2.5" stroke-linejoin="round"/>';
+    if(valid.length>1){ area='<path d="M'+valid[0].x+','+(H-26)+' '+valid.map(function(p){return 'L'+p.x+','+p.y;}).join(' ')+' L'+valid[valid.length-1].x+','+(H-26)+' Z" fill="rgba(61,90,245,.10)"/>'; }
+    dots=valid.map(function(p){return '<circle cx="'+p.x+'" cy="'+p.y+'" r="4.5" fill="#fff" stroke="'+gColor(p.v)+'" stroke-width="2.5"/><text x="'+p.x+'" y="'+(p.y-11)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#1e2a4a">'+Math.round(p.v)+'%</text>';}).join("");
+  }
+  var xlab=labels.map(function(l,i){
+    var t='<text x="'+xs(i)+'" y="'+(H-6)+'" text-anchor="middle" font-size="10" font-weight="600" fill="#6b7796">'+l+'</text>';
+    if(q[i]===null){ t+='<text x="'+xs(i)+'" y="'+(ys(0)-6)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#c2c7d4">'+(naState['f-q'+(i+1)]?'N/A':'—')+'</text>'; }
+    return t;
+  }).join("");
+  var empty = valid.length? '' : '<text x="'+(W/2)+'" y="'+((H-26)/2+8)+'" text-anchor="middle" font-size="11" fill="#94a1bd">Enter quarter grades to see progress</text>';
+  document.getElementById('miniChart').innerHTML='<svg viewBox="0 0 '+W+' '+H+'" width="100%" xmlns="http://www.w3.org/2000/svg">'+grid+area+line+dots+xlab+empty+'</svg>';
 }
 
 /* lock */
@@ -357,7 +377,8 @@ function prefill(){
   set('f-subject',c.subject||"Mathematics");set('f-teacher',c.teacher);set('f-date',c.dateSubmitted);
   set('f-reason-detail',c.reasonDetail);
   set('f-missing',c.missing);
-  set('f-q1',c.q1);set('f-q2',c.q2);set('f-q3',c.q3);set('f-q4',c.q4);set('f-hw',c.homeworkAvg);set('f-participation',c.participation);
+  ['f-q1','f-q2','f-q3','f-q4'].forEach(function(id){ var key=id.replace('f-',''); if(c[key]==='N/A'){ naState[id]=true; var inp=document.getElementById(id); inp.value=''; inp.disabled=true; var btn=document.getElementById('na-'+id); if(btn)btn.classList.add('on'); } else { set(id,c[key]); } });
+  set('f-hw',c.homeworkAvg);set('f-participation',c.participation);
   recalc();
   set('f-feedback',c.feedback);set('f-action-other',c.actionOther);
   set('f-meetdate',c.meetingDate);set('f-assigned',c.assignedTeacher);set('f-attendees',c.attendees);set('f-decision',c.finalDecision);set('f-followup',c.followUp);set('f-status',c.status);
@@ -372,6 +393,7 @@ function markChips(cid,store){document.getElementById(cid).querySelectorAll('.ch
 
 /* save */
 function val(id){return (document.getElementById(id).value||"").trim();}
+function qStore(id){return naState[id] ? "N/A" : val(id);}
 function saveReport(){
   var msg=document.getElementById('formMsg');
   var name=val('f-name'), year=val('f-year');
@@ -384,7 +406,7 @@ function saveReport(){
     teacher:val('f-teacher'), dateSubmitted:val('f-date')|| new Date().toISOString().slice(0,10),
     reasons:Array.from(selReasons), reasonDetail:val('f-reason-detail'),
     currentGrade:val('f-current'), runningAverage:val('f-running'),
-    q1:val('f-q1'), q2:val('f-q2'), q3:val('f-q3'), q4:val('f-q4'),
+    q1:qStore('f-q1'), q2:qStore('f-q2'), q3:qStore('f-q3'), q4:qStore('f-q4'),
     homeworkAvg:val('f-hw'), participation:val('f-participation'), missing:val('f-missing'),
     feedback:val('f-feedback'), actions:Array.from(selActions), actionOther:val('f-action-other'),
     meetingDate:val('f-meetdate'), attendees:val('f-attendees'), finalDecision:val('f-decision'),
