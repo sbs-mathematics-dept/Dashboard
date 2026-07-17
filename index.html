@@ -676,7 +676,9 @@ document.querySelectorAll('#sidebar .nav-item').forEach(function(n){
   // Recent Activity — newest items your team has added across the tools
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function fmtD(s){if(!s)return'';var p=(''+s).split('-');return p.length===3?(+p[2])+' '+MON[+p[1]-1]+' '+p[0]:'';}
-  function ts(id){var m=/(\d{13})$/.exec(id||'');return m?+m[1]:0;} // creation time from "xxx-<Date.now()>"
+  function ts(o){var id=(o&&o.id)||'';var m=/(\d{13})/.exec(id);if(m)return +m[1];
+    var d=o.createdAt||o.dateRequested||o.dateSubmitted||o.date;if(d){var t=+new Date(d);if(t)return t;}return 1;}
+  function isSeed(o){return /(^|-)seed-/.test((o&&o.id)||'');} // exclude the pre-loaded school-calendar events
   var ICON={
     event:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="16" height="17" rx="2.5"/><path d="M8 3v3M16 3v3M4 9h16"/></svg>',
     delib:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 3-4.5 5.5-4.5S13.9 16 14.5 19"/></svg>',
@@ -684,10 +686,10 @@ document.querySelectorAll('#sidebar .nav-item').forEach(function(n){
     mat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5Z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/></svg>'
   };
   var feed=[];
-  (ls('sbs_maths_events_v1')||[]).forEach(function(e){ if(ts(e.id)) feed.push({t:ts(e.id),ic:ICON.event,txt:'New event: <b>'+esc(e.title||'Event')+'</b>',sub:fmtD(e.date)+(e.category?' · '+esc(e.category):'')}); });
-  (ls('sbs_deliberation_cases_v2')||[]).forEach(function(c){ if(ts(c.id)) feed.push({t:ts(c.id),ic:ICON.delib,txt:'Deliberation case: <b>'+esc(c.studentName||c.student||'Student')+'</b>',sub:esc(c.status||'')}); });
-  (ls('sbs_meetings_v2')||[]).forEach(function(m){ if(ts(m.id)) feed.push({t:ts(m.id),ic:ICON.meet,txt:'Meeting: <b>'+esc(m.title||'Meeting')+'</b>',sub:fmtD(m.date)}); });
-  (ls('sbs_material_requests_v1')||[]).forEach(function(r){ if(ts(r.id)) feed.push({t:ts(r.id),ic:ICON.mat,txt:'Material request: <b>'+esc(r.item||'Item')+'</b>',sub:esc(r.priority||'')}); });
+  (ls('sbs_maths_events_v1')||[]).forEach(function(e){ if(!isSeed(e)) feed.push({t:ts(e),ic:ICON.event,txt:'New event: <b>'+esc(e.title||'Event')+'</b>',sub:fmtD(e.date)+(e.category||e.cat?' · '+esc(e.category||e.cat):'')}); });
+  (ls('sbs_deliberation_cases_v2')||[]).forEach(function(c){ if(!isSeed(c)) feed.push({t:ts(c),ic:ICON.delib,txt:'Deliberation case: <b>'+esc(c.studentName||c.student||'Student')+'</b>',sub:esc(c.status||'')}); });
+  (ls('sbs_meetings_v2')||[]).forEach(function(m){ if(!isSeed(m)) feed.push({t:ts(m),ic:ICON.meet,txt:'Meeting: <b>'+esc(m.title||'Meeting')+'</b>',sub:fmtD(m.date)}); });
+  (ls('sbs_material_requests_v1')||[]).forEach(function(r){ if(!isSeed(r)) feed.push({t:ts(r),ic:ICON.mat,txt:'Material request: <b>'+esc(r.item||r.title||'Item')+'</b>',sub:esc(r.priority||'')}); });
   feed.sort(function(a,b){return b.t-a.t;});
   var af=document.getElementById('activityFeed');
   if(af && feed.length){
