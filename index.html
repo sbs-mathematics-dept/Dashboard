@@ -199,7 +199,7 @@ svg{display:block;}
 
 /* Stat cards */
 .stats{
-  display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:22px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px;
 }
 .stat{background:#fff;border:1px solid var(--line-2);border-radius:var(--radius);
   box-shadow:var(--shadow);padding:18px 18px 16px;display:flex;flex-direction:column;gap:12px;}
@@ -268,6 +268,9 @@ svg{display:block;}
 .act .txt{flex:1 1 auto;font-size:12.5px;color:var(--ink-soft);}
 .act .txt b{color:var(--ink);font-weight:600;}
 .act .time{font-size:11.5px;color:var(--muted-2);white-space:nowrap;}
+.act-ic{width:34px;height:34px;flex:0 0 34px;border-radius:9px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;}
+.act-ic svg{width:17px;height:17px;stroke-width:1.9;}
+.act-sub{font-size:11px;color:var(--muted);margin-top:2px;text-transform:capitalize;}
 
 .ann{padding:8px 10px 14px;}
 .ann-item{display:flex;gap:12px;padding:12px;border-radius:12px;}
@@ -326,6 +329,9 @@ svg{display:block;}
 /* Accessibility */
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px;}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto;}}
+.sync{display:inline-block;font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;background:#eef1f8;color:#6b7796;}
+.sync.ok{background:#e6f8ee;color:#16a34a;}
+.sync.off{background:#fdf3e0;color:#e39a15;}
 </style>
 </head>
 <body>
@@ -427,6 +433,7 @@ svg{display:block;}
         <div class="hello">Welcome back, Rochelle! &#128075;</div>
         <h1>Mathematics<br>Department Portal</h1>
         <div class="tagline">Plan. Teach. Collaborate. Improve.</div>
+        <div class="sync" id="syncStatus" style="margin-top:12px">Connecting&hellip;</div>
         <div class="hero-actions">
           <a class="btn btn-primary" data-key="lesson">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 6.5C10.5 5 8 4.5 4 5v13c4-.5 6.5 0 8 1.5 1.5-1.5 4-2 8-1.5V5c-4-.5-6.5 0-8 1.5Z"/><path d="M12 6.5v13"/></svg>
@@ -451,13 +458,6 @@ svg{display:block;}
       </div>
       <div class="stat">
         <div class="stat-top">
-          <div class="stat-ic ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 6.5C10.5 5 8 4.5 4 5v13c4-.5 6.5 0 8 1.5 1.5-1.5 4-2 8-1.5V5c-4-.5-6.5 0-8 1.5Z"/><path d="M12 6.5v13"/></svg></div>
-          <div><div class="num">0%</div><div class="name">Lessons Completed</div><div class="sub">of 0 planned lessons</div></div>
-        </div>
-        <div class="bar"><i style="width:0%;background:var(--green)"></i></div>
-      </div>
-      <div class="stat">
-        <div class="stat-top">
           <div class="stat-ic ic-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="3.4"/><path d="M5 19.5c.8-3.4 3.6-5.2 7-5.2s6.2 1.8 7 5.2"/></svg></div>
           <div><div class="num" id="stDelib">0</div><div class="name">Student Deliberations</div><div class="sub">Open cases</div></div>
         </div>
@@ -473,9 +473,9 @@ svg{display:block;}
       <div class="stat">
         <div class="stat-top">
           <div class="stat-ic ic-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></div>
-          <div><div class="num">0%</div><div class="name">Curriculum Progress</div><div class="sub">Overall coverage</div></div>
+          <div><div class="num" id="stCurriculum">0%</div><div class="name">Curriculum Progress</div><div class="sub">Overall coverage</div></div>
         </div>
-        <div class="bar"><i style="width:0%;background:var(--primary)"></i></div>
+        <div class="bar"><i id="stCurriculumBar" style="width:0%;background:var(--primary)"></i></div>
       </div>
     </section>
 
@@ -512,13 +512,13 @@ svg{display:block;}
       <div class="card">
         <div class="card-h"><h3>Progress by Year Level</h3></div>
         <div class="prog">
-          <div class="prog-row"><span class="yr">Year 7</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
-          <div class="prog-row"><span class="yr">Year 8</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
-          <div class="prog-row"><span class="yr">Year 9</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
-          <div class="prog-row"><span class="yr">Year 10 IGCSE</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
-          <div class="prog-row"><span class="yr">Year 11 IGCSE</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
-          <div class="prog-row"><span class="yr">Year 12</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
-          <div class="prog-row"><span class="yr">Year 13</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
+          <div class="prog-row" data-year="y7"><span class="yr">Year 7</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
+          <div class="prog-row" data-year="y8"><span class="yr">Year 8</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
+          <div class="prog-row" data-year="y9"><span class="yr">Year 9</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
+          <div class="prog-row" data-year="y10igcse"><span class="yr">Year 10 IGCSE</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
+          <div class="prog-row" data-year="y11igcse"><span class="yr">Year 11 IGCSE</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
+          <div class="prog-row" data-year="y12"><span class="yr">Year 12</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
+          <div class="prog-row" data-year="y13"><span class="yr">Year 13</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0%</span></div>
         </div>
         <div class="card-foot"><a data-key="lesson">View full lesson tracker <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
       </div>
@@ -543,7 +543,7 @@ svg{display:block;}
     <section class="grid-2">
       <div class="card">
         <div class="card-h"><h3>Recent Activity</h3></div>
-        <div class="activity">
+        <div class="activity" id="activityFeed">
           <div class="act" style="color:var(--muted)"><div class="txt">No recent activity yet. It will appear here as your team adds cases, meetings, and events.</div></div>
         </div>
       </div>
@@ -619,10 +619,19 @@ document.querySelectorAll('#sidebar .nav-item').forEach(function(n){
 
 /* Live summary from the other tools' saved data (per browser) */
 (function(){
+  var CLOUD_URL="https://script.google.com/macros/s/AKfycby8-iMAua9_ssC6cboQchK2-u6mtDzWBT8aGG3ivCIsrbyGnXHF4CH_IcjvcHQJHWHw/exec";
+  var CLOUD_SECRET="sbsmathteacher";
+  var KEYS=['sbs_material_requests_v1','sbs_deliberation_cases_v2','sbs_meetings_v2','sbs_maths_events_v1','sbs_lesson_summary_v1'];
+  function setSync(s){var el=document.getElementById('syncStatus');if(!el)return;
+    if(s==='ok'){el.textContent='\u2713 Live \u00b7 shared with your team';el.className='sync ok';}
+    else if(s==='off'){el.textContent='\u26A0 Showing this device';el.className='sync off';}
+    else{el.textContent='Connecting\u2026';el.className='sync';}}
   function ls(k){try{return JSON.parse(localStorage.getItem(k))||null;}catch(e){return null;}}
   var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   var WD=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   function fmtTime(t){if(!t)return"";var p=t.split(":");var h=+p[0],m=p[1],ap=h<12?"AM":"PM";h=h%12||12;return h+":"+m+" "+ap;}
+
+  function paint(){
 
   // Student deliberations (open = not resolved)
   var mats = ls('sbs_material_requests_v1') || [];
@@ -646,6 +655,54 @@ document.querySelectorAll('#sidebar .nav-item').forEach(function(n){
       +'<div><div class="meet-title">'+next.title.replace(/[&<>]/g,'')+'</div><div class="meet-when">'+when+'</div><div class="meet-room">'+(next.location||'').replace(/[&<>]/g,'')+'</div></div></div>'
       +(agenda?'<div class="agenda-h">Agenda</div><ul class="agenda">'+agenda+'</ul>':'');
   }
+
+  // Curriculum progress + per-year bars, from the lesson tracker's published summary
+  var sum = ls('sbs_lesson_summary_v1');
+  if(sum && sum.overall){
+    var cEl=document.getElementById('stCurriculum'); if(cEl) cEl.textContent=sum.overall.pct+'%';
+    var cBar=document.getElementById('stCurriculumBar'); if(cBar) cBar.style.width=sum.overall.pct+'%';
+    document.querySelectorAll('.prog-row[data-year]').forEach(function(row){
+      var y=(sum.years||{})[row.getAttribute('data-year')]; if(!y) return;
+      var i=row.querySelector('.bar>i'); if(i) i.style.width=y.pct+'%';
+      var pc=row.querySelector('.pct'); if(pc) pc.textContent=y.pct+'%';
+    });
+  }
+
+  // Recent Activity — newest items your team has added across the tools
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function fmtD(s){if(!s)return'';var p=(''+s).split('-');return p.length===3?(+p[2])+' '+MON[+p[1]-1]+' '+p[0]:'';}
+  function ts(id){var m=/(\d{13})$/.exec(id||'');return m?+m[1]:0;} // creation time from "xxx-<Date.now()>"
+  var ICON={
+    event:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="16" height="17" rx="2.5"/><path d="M8 3v3M16 3v3M4 9h16"/></svg>',
+    delib:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 3-4.5 5.5-4.5S13.9 16 14.5 19"/></svg>',
+    meet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="16" height="17" rx="2.5"/><path d="M8 3v3M16 3v3M8 11h8M8 15h5"/></svg>',
+    mat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5Z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/></svg>'
+  };
+  var feed=[];
+  (ls('sbs_maths_events_v1')||[]).forEach(function(e){ if(ts(e.id)) feed.push({t:ts(e.id),ic:ICON.event,txt:'New event: <b>'+esc(e.title||'Event')+'</b>',sub:fmtD(e.date)+(e.category?' · '+esc(e.category):'')}); });
+  (ls('sbs_deliberation_cases_v2')||[]).forEach(function(c){ if(ts(c.id)) feed.push({t:ts(c.id),ic:ICON.delib,txt:'Deliberation case: <b>'+esc(c.studentName||c.student||'Student')+'</b>',sub:esc(c.status||'')}); });
+  (ls('sbs_meetings_v2')||[]).forEach(function(m){ if(ts(m.id)) feed.push({t:ts(m.id),ic:ICON.meet,txt:'Meeting: <b>'+esc(m.title||'Meeting')+'</b>',sub:fmtD(m.date)}); });
+  (ls('sbs_material_requests_v1')||[]).forEach(function(r){ if(ts(r.id)) feed.push({t:ts(r.id),ic:ICON.mat,txt:'Material request: <b>'+esc(r.item||'Item')+'</b>',sub:esc(r.priority||'')}); });
+  feed.sort(function(a,b){return b.t-a.t;});
+  var af=document.getElementById('activityFeed');
+  if(af && feed.length){
+    af.innerHTML=feed.slice(0,6).map(function(f){
+      return '<div class="act"><div class="act-ic">'+f.ic+'</div><div><div class="txt">'+f.txt+'</div>'+(f.sub?'<div class="act-sub">'+f.sub+'</div>':'')+'</div></div>';
+    }).join('');
+  }
+  } // end paint
+
+  paint(); // show cached data immediately
+  // Then refresh from the shared Google Sheet (all keys in one request)
+  fetch(CLOUD_URL+'?secret='+encodeURIComponent(CLOUD_SECRET))
+    .then(function(r){return r.json();})
+    .then(function(j){
+      setSync('ok');
+      var data=(j&&j.ok&&j.data)?j.data:{};
+      KEYS.forEach(function(k){ if(data[k]!==undefined){ try{localStorage.setItem(k,data[k]);}catch(e){} } });
+      paint();
+    })
+    .catch(function(){ setSync('off'); });
 })();
 </script>
 </body>

@@ -111,6 +111,18 @@ a{text-decoration:none;color:inherit;} img{display:block;max-width:100%;} svg{di
 @media (max-width:600px){ .grid2,.grid3,.ai-grid{grid-template-columns:1fr;} .form-head h1{font-size:25px;} }
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px;}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+.ag-item{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:#fbfcfe;}
+.ag-item .ag-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.ag-item .ag-n{font-size:12px;font-weight:800;color:var(--primary);}
+.ag-item label{display:block;font-size:11.5px;font-weight:700;color:var(--ink-soft,#475569);margin:9px 0 4px;}
+.ag-item textarea{width:100%;font-family:inherit;font-size:13.5px;color:var(--ink);padding:9px 11px;border:1px solid var(--line);border-radius:9px;resize:vertical;line-height:1.55;background:#fff;}
+.ag-item .ag-topic{min-height:74px;} .ag-item .ag-action{min-height:50px;}
+.ag-item textarea:focus,.ag-item input:focus,.ag-item select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(61,90,245,.12);}
+.ag-item .ag-row3{display:grid;grid-template-columns:1fr 150px 150px;gap:10px;margin-top:9px;}
+.ag-item .ag-row3 input,.ag-item .ag-row3 select{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);}
+.ag-item .ag-x{border:none;background:#f2f4fa;color:var(--muted);width:28px;height:28px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.ag-item .ag-x:hover{background:#fde6e6;color:#dc2626;} .ag-item .ag-x svg{width:15px;height:15px;stroke-width:2;}
+@media (max-width:560px){.ag-item .ag-row3{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -154,10 +166,10 @@ a{text-decoration:none;color:inherit;} img{display:block;max-width:100%;} svg{di
         </div>
       </div>
 
-      <!-- 2. Agenda -->
+      <!-- 2. Agenda & Actions -->
       <div class="fsec">
-        <div class="fsec-head"><div class="fsec-num">2</div><div><h3>Agenda</h3><p>List the topics to be discussed.</p></div></div>
-        <div class="rowlist" id="agendaList"></div>
+        <div class="fsec-head"><div class="fsec-num">2</div><div><h3>Agenda &amp; Actions</h3><p>One box per topic. Write the discussion notes, then the action needed for that item.</p></div></div>
+        <div id="agendaList"></div>
         <button class="add-row" onclick="addAgenda()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>Add agenda item</button>
       </div>
 
@@ -170,22 +182,15 @@ a{text-decoration:none;color:inherit;} img{display:block;max-width:100%;} svg{di
         </div>
       </div>
 
-      <!-- 4. Action Items -->
+      <!-- 4. Signed by -->
       <div class="fsec">
-        <div class="fsec-head"><div class="fsec-num">4</div><div><h3>Action Items</h3><p>What needs doing, by whom, and by when?</p></div></div>
-        <div class="rowlist" id="actionList"></div>
-        <button class="add-row" onclick="addAction()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>Add action item</button>
-      </div>
-
-      <!-- 5. Signed by -->
-      <div class="fsec">
-        <div class="fsec-head"><div class="fsec-num">5</div><div><h3>Signed by</h3><p>Tick who has reviewed and signed off these minutes.</p></div></div>
+        <div class="fsec-head"><div class="fsec-num">4</div><div><h3>Signed by</h3><p>Tick who has reviewed and signed off these minutes.</p></div></div>
         <div class="chips" id="signList"></div>
       </div>
 
-      <!-- 6. Attachments -->
+      <!-- 5. Attachments -->
       <div class="fsec">
-        <div class="fsec-head"><div class="fsec-num">6</div><div><h3>Optional Attachments</h3><p>Agenda documents, reports, or supporting files.</p></div></div>
+        <div class="fsec-head"><div class="fsec-num">5</div><div><h3>Optional Attachments</h3><p>Agenda documents, reports, or supporting files.</p></div></div>
         <label class="filedrop" for="f-files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/></svg><div class="ft">Click to choose files</div><div class="fs">PDF, images, or documents</div></label>
         <input id="f-files" type="file" multiple style="display:none" onchange="addFiles(this.files)">
         <div class="file-list" id="fileList"></div>
@@ -209,26 +214,41 @@ document.querySelectorAll('.nav-item[data-key]').forEach(function(el){el.addEven
 function toggleNav(o){var a=document.getElementById('app');if(o===undefined)o=!a.classList.contains('nav-open');a.classList.toggle('nav-open',o);}
 function goBack(){location.href="minutes.html";}
 
+/* ---- Shared storage (Google Sheet backend) ---- */
+var CLOUD_URL="https://script.google.com/macros/s/AKfycby8-iMAua9_ssC6cboQchK2-u6mtDzWBT8aGG3ivCIsrbyGnXHF4CH_IcjvcHQJHWHw/exec";
+var CLOUD_SECRET="sbsmathteacher";
+function setSync(s){var el=document.getElementById('syncStatus');if(!el)return;
+  if(s==='ok'){el.textContent='\u2713 Shared with your team';el.className='sync ok';}
+  else if(s==='off'){el.textContent='\u26A0 Saved on this device only';el.className='sync off';}
+  else{el.textContent='Connecting\u2026';el.className='sync';}}
+function cloudGet(key){return fetch(CLOUD_URL+'?key='+encodeURIComponent(key)+'&secret='+encodeURIComponent(CLOUD_SECRET))
+  .then(function(r){return r.json();})
+  .then(function(j){setSync('ok');if(j&&j.ok&&j.value){try{return JSON.parse(j.value);}catch(e){return null;}}return null;})
+  .catch(function(){setSync('off');return undefined;});}
+function cloudSet(key,val){return fetch(CLOUD_URL,{method:'POST',body:JSON.stringify({action:'set',key:key,value:JSON.stringify(val),secret:CLOUD_SECRET})})
+  .then(function(r){return r.json();}).then(function(j){setSync('ok');return j;}).catch(function(){setSync('off');return null;});}
 var STORE_KEY="sbs_meetings_v2";
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function initials(n){var w=(n||"?").trim().split(/\s+/);return (((w[0]||"")[0]||"")+((w[1]||"")[0]||"")).toUpperCase();}
 var AVCOL=["#4f6bf6","#ef6aa0","#12b981","#7c5cf0","#f0954a","#2ba3e3","#e0546f","#e0a92a"];
 function avColor(seed){seed=seed||"?";var h=0;for(var i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))%AVCOL.length;return AVCOL[h];}
 
-/* agenda rows */
-function addAgenda(v){var wrap=document.getElementById('agendaList');var d=document.createElement('div');d.className='rl-item';
-  d.innerHTML='<input type="text" placeholder="e.g. Curriculum Progress Update"><button class="rl-x" onclick="this.parentNode.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 7h14M9 7V5h6v2M7 7l1 12h8l1-12"/></svg></button>';
-  wrap.appendChild(d);if(v)d.querySelector('input').value=v;}
-/* action items */
-function addAction(it){it=it||{};var wrap=document.getElementById('actionList');var d=document.createElement('div');d.className='ai-item';
-  d.innerHTML='<div class="ai-top"><input class="ai-text" type="text" placeholder="Action description"><button class="rl-x" onclick="this.closest(\'.ai-item\').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 7h14M9 7V5h6v2M7 7l1 12h8l1-12"/></svg></button></div>'
-    +'<div class="ai-grid"><input class="ai-assignee" type="text" placeholder="Assigned to"><input class="ai-due" type="date"><select class="ai-status"><option value="notstarted">Not Started</option><option value="inprogress">In Progress</option><option value="completed">Completed</option><option value="overdue">Overdue</option></select></div>';
+/* agenda rows — each item has discussion notes + the action needed */
+function addAgenda(item){item=item||{}; if(typeof item==='string')item={topic:item};
+  var wrap=document.getElementById('agendaList');var d=document.createElement('div');d.className='ag-item';
+  d.innerHTML='<div class="ag-head"><span class="ag-n">Item</span><button class="ag-x" type="button" onclick="this.closest(\'.ag-item\').remove();renumberAgenda();"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 7h14M9 7V5h6v2M7 7l1 12h8l1-12"/></svg></button></div>'
+    +'<label>Discussion / notes</label><textarea class="ag-topic" placeholder="What was discussed? Write as much as you need\u2026"></textarea>'
+    +'<label>Action needed</label><textarea class="ag-action" placeholder="What needs to be done as a result of this item?"></textarea>'
+    +'<div class="ag-row3"><input class="ag-owner" type="text" placeholder="Who is responsible?"><input class="ag-due" type="date"><select class="ag-status"><option value="notstarted">Not started</option><option value="inprogress">In progress</option><option value="completed">Completed</option><option value="overdue">Overdue</option></select></div>';
   wrap.appendChild(d);
-  if(it.text)d.querySelector('.ai-text').value=it.text;
-  if(it.assignee)d.querySelector('.ai-assignee').value=it.assignee;
-  if(it.due)d.querySelector('.ai-due').value=it.due;
-  if(it.status)d.querySelector('.ai-status').value=it.status;
+  if(item.topic)d.querySelector('.ag-topic').value=item.topic;
+  if(item.action)d.querySelector('.ag-action').value=item.action;
+  if(item.owner)d.querySelector('.ag-owner').value=item.owner;
+  if(item.due)d.querySelector('.ag-due').value=item.due;
+  if(item.status)d.querySelector('.ag-status').value=item.status;
+  renumberAgenda();
 }
+function renumberAgenda(){var i=1;document.querySelectorAll('#agendaList .ag-item .ag-n').forEach(function(el){el.textContent='Item '+(i++);});}
 /* attendees */
 var attendees=[];
 function renderAtt(){document.getElementById('attChips').innerHTML=attendees.map(function(n,i){return '<span class="att-chip"><span class="av" style="background:'+avColor(n)+'">'+initials(n)+'</span>'+esc(n)+'<button onclick="rmAtt('+i+')">&times;</button></span>';}).join("");}
@@ -265,9 +285,8 @@ function prefill(){
   if(!m){addAgenda();addAgenda();addAgenda();return;}
   editingId=id;document.getElementById('formTitle').textContent="Edit Meeting";
   set('f-title',m.title);set('f-cat',m.category);set('f-status',m.status);set('f-date',m.date);set('f-location',m.location);set('f-start',m.start);set('f-end',m.end);
-  (m.agenda&&m.agenda.length?m.agenda:[""]).forEach(function(a){addAgenda(a);});
+  (m.agenda&&m.agenda.length?m.agenda:[{}]).forEach(function(a){addAgenda(a);});
   attendees=(m.attendees||[]).slice();renderAtt();
-  (m.actionItems||[]).forEach(function(it){addAction(it);});
   (m.signedBy||[]).forEach(function(s){selSigned.add(s);});
   document.getElementById('signList').querySelectorAll('.chip-check').forEach(function(ch){if(selSigned.has(ch.getAttribute('data-v')))ch.classList.add('on');});
   pendingAtts=(m.attachments||[]).slice();renderFiles();
@@ -275,10 +294,9 @@ function prefill(){
 function set(id,v){var el=document.getElementById(id);if(el&&v!=null&&v!=="")el.value=v;}
 
 function val(id){return (document.getElementById(id).value||"").trim();}
-function collectAgenda(){return Array.prototype.map.call(document.querySelectorAll('#agendaList input'),function(i){return i.value.trim();}).filter(Boolean);}
-function collectActions(){return Array.prototype.map.call(document.querySelectorAll('#actionList .ai-item'),function(d){
-  return {text:d.querySelector('.ai-text').value.trim(),assignee:d.querySelector('.ai-assignee').value.trim(),due:d.querySelector('.ai-due').value,status:d.querySelector('.ai-status').value};
-}).filter(function(a){return a.text;});}
+function collectAgenda(){return Array.prototype.map.call(document.querySelectorAll('#agendaList .ag-item'),function(d){
+  return {topic:d.querySelector('.ag-topic').value.trim(),action:d.querySelector('.ag-action').value.trim(),owner:d.querySelector('.ag-owner').value.trim(),due:d.querySelector('.ag-due').value,status:d.querySelector('.ag-status').value};
+}).filter(function(a){return a.topic||a.action;});}
 
 function saveMeeting(){
   var msg=document.getElementById('formMsg');
@@ -289,19 +307,23 @@ function saveMeeting(){
     id:editingId||("mtg-"+Date.now()),
     title:title,category:val('f-cat')||"department",status:val('f-status')||"scheduled",
     date:date,start:val('f-start'),end:val('f-end'),location:val('f-location')||"Mathematics Department Room",
-    agenda:collectAgenda(),attendees:attendees.slice(),actionItems:collectActions(),
+    agenda:collectAgenda(),attendees:attendees.slice(),actionItems:[],
     signedBy:Array.from(selSigned),attachments:pendingAtts
   };
-  var list=getMeetings();
-  if(editingId){var i=list.findIndex(function(x){return x.id===editingId;});if(i>=0)list[i]=obj;else list.push(obj);}
-  else list.push(obj);
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(list));}catch(e){}
-  msg.className="msg ok";msg.textContent="Saved! Returning to Meeting Minutes...";
-  setTimeout(function(){location.href="minutes.html";},700);
+  msg.className="msg ok";msg.textContent="Saving…";
+  cloudGet(STORE_KEY).then(function(data){
+    var list=(data===undefined)?getMeetings():(data||[]);
+    if(editingId){var i=list.findIndex(function(x){return x.id===editingId;});if(i>=0)list[i]=obj;else list.push(obj);}
+    else list.push(obj);
+    try{localStorage.setItem(STORE_KEY,JSON.stringify(list));}catch(e){}
+    cloudSet(STORE_KEY,list);
+    msg.textContent="Saved! Returning to Meeting Minutes...";
+    setTimeout(function(){location.href="minutes.html";},700);
+  });
 }
 
 document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
-prefill();
+cloudGet(STORE_KEY).then(function(data){if(data&&data.length){try{localStorage.setItem(STORE_KEY,JSON.stringify(data));}catch(e){}}prefill();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')toggleNav(false);});
 </script>
 </body>

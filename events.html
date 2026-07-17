@@ -187,6 +187,7 @@ svg{display:block;}
 }
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px;}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+.sync{display:inline-block;margin-top:10px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;background:#eef1f8;color:#6b7796;}.sync.ok{background:#e6f8ee;color:#16a34a;}.sync.off{background:#fdf3e0;color:#e39a15;}
 </style>
 </head>
 <body>
@@ -275,6 +276,7 @@ svg{display:block;}
       <div>
         <h1>Events</h1>
         <div class="sub"><b>SBS Mathematics Department</b> &middot; School calendar for Academic Year 2026&ndash;2027</div>
+        <div class="sync" id="syncStatus">Connecting&hellip;</div>
       </div>
       <button class="btn btn-primary" onclick="openAdd()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
@@ -391,6 +393,19 @@ var DEFAULT_EVENTS = [
   {t:"International Potluck",         c:"activity", s:"2027-06-18"}
 ];
 
+/* ---- Shared storage (Google Sheet backend) ---- */
+var CLOUD_URL="https://script.google.com/macros/s/AKfycby8-iMAua9_ssC6cboQchK2-u6mtDzWBT8aGG3ivCIsrbyGnXHF4CH_IcjvcHQJHWHw/exec";
+var CLOUD_SECRET="sbsmathteacher";
+function setSync(s){var el=document.getElementById('syncStatus');if(!el)return;
+  if(s==='ok'){el.textContent='\u2713 Shared with your team';el.className='sync ok';}
+  else if(s==='off'){el.textContent='\u26A0 Saved on this device only';el.className='sync off';}
+  else{el.textContent='Connecting\u2026';el.className='sync';}}
+function cloudGet(key){return fetch(CLOUD_URL+'?key='+encodeURIComponent(key)+'&secret='+encodeURIComponent(CLOUD_SECRET))
+  .then(function(r){return r.json();})
+  .then(function(j){setSync('ok');if(j&&j.ok&&j.value){try{return JSON.parse(j.value);}catch(e){return null;}}return null;})
+  .catch(function(){setSync('off');return undefined;});}
+function cloudSet(key,val){return fetch(CLOUD_URL,{method:'POST',body:JSON.stringify({action:'set',key:key,value:JSON.stringify(val),secret:CLOUD_SECRET})})
+  .then(function(r){return r.json();}).then(function(j){setSync('ok');return j;}).catch(function(){setSync('off');return null;});}
 var STORE_KEY = "sbs_maths_events_v1";
 var events = [];
 var activeFilter = "all";
@@ -399,12 +414,18 @@ var editingId = null;
 /* ---------- Storage ---------- */
 function seed(){ return DEFAULT_EVENTS.map(function(d,i){
   return {id:"seed-"+i, title:d.t, cat:d.c, start:d.s, end:d.e||""}; }); }
+function cacheSave(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(events)); }catch(e){} }
+function save(){ cacheSave(); cloudSet(STORE_KEY, events); }
 function load(){
-  try{ var raw=localStorage.getItem(STORE_KEY);
-    if(raw){ events=JSON.parse(raw); return; } }catch(e){}
-  events=seed(); save();
+  try{ var raw=localStorage.getItem(STORE_KEY); if(raw) events=JSON.parse(raw); }catch(e){}
+  render();
+  cloudGet(STORE_KEY).then(function(data){
+    if(data===undefined){ if(!events.length){ events=seed(); cacheSave(); render(); } return; }
+    if(data===null){ events=seed(); cacheSave(); cloudSet(STORE_KEY, events); }
+    else { events=data; cacheSave(); }
+    render();
+  });
 }
-function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(events)); }catch(e){} }
 
 /* ---------- Date helpers ---------- */
 var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -545,7 +566,6 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeModa
 /* ---------- Init ---------- */
 fillCatOptions();
 load();
-render();
 </script>
 </body>
 </html>

@@ -287,6 +287,19 @@ document.querySelectorAll('.nav-item[data-key]').forEach(function(el){el.addEven
 function toggleNav(o){var a=document.getElementById('app');if(o===undefined)o=!a.classList.contains('nav-open');a.classList.toggle('nav-open',o);}
 function goBack(){location.href="deliberation.html";}
 
+/* ---- Shared storage (Google Sheet backend) ---- */
+var CLOUD_URL="https://script.google.com/macros/s/AKfycby8-iMAua9_ssC6cboQchK2-u6mtDzWBT8aGG3ivCIsrbyGnXHF4CH_IcjvcHQJHWHw/exec";
+var CLOUD_SECRET="sbsmathteacher";
+function setSync(s){var el=document.getElementById('syncStatus');if(!el)return;
+  if(s==='ok'){el.textContent='\u2713 Shared with your team';el.className='sync ok';}
+  else if(s==='off'){el.textContent='\u26A0 Saved on this device only';el.className='sync off';}
+  else{el.textContent='Connecting\u2026';el.className='sync';}}
+function cloudGet(key){return fetch(CLOUD_URL+'?key='+encodeURIComponent(key)+'&secret='+encodeURIComponent(CLOUD_SECRET))
+  .then(function(r){return r.json();})
+  .then(function(j){setSync('ok');if(j&&j.ok&&j.value){try{return JSON.parse(j.value);}catch(e){return null;}}return null;})
+  .catch(function(){setSync('off');return undefined;});}
+function cloudSet(key,val){return fetch(CLOUD_URL,{method:'POST',body:JSON.stringify({action:'set',key:key,value:JSON.stringify(val),secret:CLOUD_SECRET})})
+  .then(function(r){return r.json();}).then(function(j){setSync('ok');return j;}).catch(function(){setSync('off');return null;});}
 var STORE_KEY="sbs_deliberation_cases_v2";
 function gColor(p){p=+p;if(p>=70)return"#16a34a";if(p>=60)return"#b8860b";if(p>=50)return"#ea580c";return"#dc2626";}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -413,18 +426,22 @@ function saveReport(){
     assignedTeacher:val('f-assigned'), followUp:val('f-followup'),
     status: val('f-status')||"attention", attachments:pendingAtts
   };
-  var list=getCases();
-  if(editingId){var i=list.findIndex(function(x){return x.id===editingId;});if(i>=0)list[i]=obj;else list.push(obj);}
-  else{list.push(obj);}
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(list));}catch(e){}
-  msg.className="msg ok";msg.textContent="Saved! Returning to Student Deliberation...";
-  setTimeout(function(){location.href="deliberation.html";},700);
+  msg.className="msg ok";msg.textContent="Saving…";
+  cloudGet(STORE_KEY).then(function(data){
+    var list=(data===undefined)?getCases():(data||[]);
+    if(editingId){var i=list.findIndex(function(x){return x.id===editingId;});if(i>=0)list[i]=obj;else list.push(obj);}
+    else{list.push(obj);}
+    try{localStorage.setItem(STORE_KEY,JSON.stringify(list));}catch(e){}
+    cloudSet(STORE_KEY,list);
+    msg.textContent="Saved! Returning to Student Deliberation...";
+    setTimeout(function(){location.href="deliberation.html";},700);
+  });
 }
 
 /* init */
 document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
 recalc();
-prefill();
+cloudGet(STORE_KEY).then(function(data){if(data&&data.length){try{localStorage.setItem(STORE_KEY,JSON.stringify(data));}catch(e){}}prefill();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')toggleNav(false);});
 </script>
 </body>
