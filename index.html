@@ -680,11 +680,11 @@ document.querySelectorAll('#sidebar .nav-item').forEach(function(n){
   var next = meetings.filter(function(m){return m.status==='scheduled';}).sort(function(a,b){return a.date<b.date?-1:1;})[0];
   var box = document.getElementById('upcomingMeeting');
   if(next && box){
-    var d=next.date.split('-'); var dt=new Date(+d[0],+d[1]-1,+d[2]);
+    var d=(next.date||'').split('-'); var dt=new Date(+d[0],+d[1]-1,+d[2]);
     var when = WD[dt.getDay()]+', '+dt.getDate()+' '+MON[dt.getMonth()]+' '+dt.getFullYear()+' · '+fmtTime(next.start)+(next.end?' – '+fmtTime(next.end):'');
-    var agenda = (next.agenda||[]).map(function(a){return '<li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12l4 4 10-10"/></svg></span>'+a.replace(/[&<>]/g,'')+'</li>';}).join('');
+    var agenda = (next.agenda||[]).map(function(a){var t=(a&&typeof a==='object')?(a.topic||''):(''+(a==null?'':a));return '<li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12l4 4 10-10"/></svg></span>'+t.replace(/[&<>]/g,'')+'</li>';}).join('');
     box.innerHTML = '<div class="meet-head"><div class="meet-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="16" height="17" rx="2.5"/><path d="M8 3v3M16 3v3M4 9h16"/></svg></div>'
-      +'<div><div class="meet-title">'+next.title.replace(/[&<>]/g,'')+'</div><div class="meet-when">'+when+'</div><div class="meet-room">'+(next.location||'').replace(/[&<>]/g,'')+'</div></div></div>'
+      +'<div><div class="meet-title">'+(next.title||'Meeting').replace(/[&<>]/g,'')+'</div><div class="meet-when">'+when+'</div><div class="meet-room">'+(next.location||'').replace(/[&<>]/g,'')+'</div></div></div>'
       +(agenda?'<div class="agenda-h">Agenda</div><ul class="agenda">'+agenda+'</ul>':'');
   }
 
