@@ -737,12 +737,15 @@ document.querySelectorAll('#sidebar .nav-item').forEach(function(n){
     document.head.appendChild(sc);
   }
   paint(); // show cached data immediately
-  jsonp(CLOUD_URL+'?secret='+encodeURIComponent(CLOUD_SECRET), function(j){
-    if(j===undefined){ setSync('off'); return; }
-    setSync('ok');
-    var data=(j&&j.ok&&j.data)?j.data:{};
-    KEYS.forEach(function(k){ if(data[k]!==undefined){ try{localStorage.setItem(k,data[k]);}catch(e){} } });
-    paint();
+  // Load each piece separately (same reliable method the announcements use)
+  var _pending=KEYS.length, _anyOk=false;
+  KEYS.forEach(function(k){
+    jsonp(CLOUD_URL+'?key='+encodeURIComponent(k)+'&secret='+encodeURIComponent(CLOUD_SECRET), function(j){
+      _pending--;
+      if(j&&j.ok){ _anyOk=true; setSync('ok'); if(j.value){ try{localStorage.setItem(k, j.value);}catch(e){} } }
+      paint();
+      if(_pending===0 && !_anyOk){ setSync('off'); }
+    });
   });
 })();
 </script>
