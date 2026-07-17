@@ -144,15 +144,18 @@ function ls(k){try{return JSON.parse(localStorage.getItem(k))||null;}catch(e){re
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function fmtD(s){if(!s)return'';var p=(''+s).split('-');return p.length===3?(+p[2])+' '+MON[+p[1]-1]+' '+p[0]:'';}
 var CALIC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="4" width="16" height="17" rx="2.5"/><path d="M8 3v3M16 3v3M4 9h16"/></svg>';
+function edt(e){return e.start||e.date||'';}
 function renderDept(list){
   var body=document.getElementById('deptBody');
   var today=new Date().toISOString().slice(0,10);
-  var items=(list||[]).filter(function(e){return e.date;}).sort(function(a,b){return a.date<b.date?-1:1;});
-  var upcoming=items.filter(function(e){return e.date>=today;});
+  // only events your team added on the Events page (exclude the seeded school-calendar entries)
+  var items=(list||[]).filter(function(e){return edt(e) && !/^seed-/.test(e.id||'');}).sort(function(a,b){return edt(a)<edt(b)?-1:1;});
+  var upcoming=items.filter(function(e){return edt(e)>=today;});
   var show=upcoming.length?upcoming:items;
   if(!show.length){body.innerHTML='<div class="empty">No department events yet. Add them on the <a class="mlink" href="events.html">Events page</a>.</div>';return;}
   body.innerHTML=show.map(function(e){
-    return '<div class="dept-row"><div class="dept-ic">'+CALIC+'</div><div><div class="dept-t">'+esc(e.title||'Event')+'</div><div class="dept-d">'+fmtD(e.date)+'</div></div>'+(e.cat||e.category?'<span class="dept-cat">'+esc(e.cat||e.category)+'</span>':'')+'</div>';
+    var d=fmtD(edt(e))+((e.end&&e.end!==edt(e))?' – '+fmtD(e.end):'');
+    return '<div class="dept-row"><div class="dept-ic">'+CALIC+'</div><div><div class="dept-t">'+esc(e.title||'Event')+'</div><div class="dept-d">'+d+'</div></div>'+(e.cat||e.category?'<span class="dept-cat">'+esc(e.cat||e.category)+'</span>':'')+'</div>';
   }).join("");
 }
 // cached first, then shared sheet
