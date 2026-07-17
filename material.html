@@ -49,6 +49,9 @@ a{text-decoration:none;color:inherit;} img{display:block;max-width:100%;} svg{di
 .hello{font-size:15px;color:var(--ink-soft);font-weight:600;margin-bottom:4px;}
 .page-title{font-size:34px;font-weight:800;letter-spacing:-.025em;color:var(--ink);line-height:1.05;}
 .page-sub{font-size:14px;color:var(--muted);margin-top:8px;}
+.sync{display:inline-block;margin-top:10px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;background:#eef1f8;color:var(--muted);}
+.sync.ok{background:#e6f8ee;color:#16a34a;}
+.sync.off{background:#fdf3e0;color:#e39a15;}
 .search{margin:18px 0 20px;position:relative;max-width:420px;}
 .search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--muted-2);stroke-width:2;}
 .search input{width:100%;font-family:inherit;font-size:13.5px;padding:11px 14px 11px 40px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow-sm);}
@@ -186,13 +189,14 @@ tbody tr:last-child td{border-bottom:none;} tbody tr:hover{background:#f9fafe;}
       <div class="mt-title">Material Requests</div><div style="width:42px"></div>
     </div>
     <div class="topbar">
-      <div class="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9a6 6 0 0 1 12 0c0 5 1.5 6.5 1.5 6.5H4.5S6 14 6 9Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="dot">3</span></div>
+      <div class="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9a6 6 0 0 1 12 0c0 5 1.5 6.5 1.5 6.5H4.5S6 14 6 9Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
       <div class="profile"><div class="avatar">RV</div><div class="who"><div class="nm">Rochelle Vera</div><div class="rl">Head of Department</div></div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6"/></svg></div>
     </div>
 
     <div class="hello">Welcome back, Rochelle! &#128075;</div>
     <h1 class="page-title">Material Requests</h1>
     <p class="page-sub">Request and track teaching materials and supplies for the department.</p>
+    <div class="sync" id="syncStatus">Connecting&hellip;</div>
 
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
@@ -253,6 +257,20 @@ var PORTAL_LINKS={dashboard:"index.html",lesson:"lesson-tracker.html",deliberati
 document.querySelectorAll('.nav-item[data-key]').forEach(function(el){el.addEventListener('click',function(){var u=PORTAL_LINKS[el.getAttribute('data-key')]||"#";if(u&&u!=="#"&&u!=="material.html")location.href=u;toggleNav(false);});});
 function toggleNav(o){var a=document.getElementById('app');if(o===undefined)o=!a.classList.contains('nav-open');a.classList.toggle('nav-open',o);}
 
+/* ---- Shared storage (Google Sheet backend) ---- */
+var CLOUD_URL="https://script.google.com/macros/s/AKfycby8-iMAua9_ssC6cboQchK2-u6mtDzWBT8aGG3ivCIsrbyGnXHF4CH_IcjvcHQJHWHw/exec";
+var CLOUD_SECRET="sbsmathteacher";
+function setSync(s){var el=document.getElementById('syncStatus');if(!el)return;
+  if(s==='ok'){el.textContent='\u2713 Shared with your team';el.className='sync ok';}
+  else if(s==='off'){el.textContent='\u26A0 Saved on this device only';el.className='sync off';}
+  else{el.textContent='Connecting\u2026';el.className='sync';}}
+function cloudGet(key){return fetch(CLOUD_URL+'?key='+encodeURIComponent(key)+'&secret='+encodeURIComponent(CLOUD_SECRET))
+  .then(function(r){return r.json();})
+  .then(function(j){setSync('ok');if(j&&j.ok&&j.value){try{return JSON.parse(j.value);}catch(e){return null;}}return null;})
+  .catch(function(){setSync('off');return undefined;});}
+function cloudSet(key,val){return fetch(CLOUD_URL,{method:'POST',body:JSON.stringify({action:'set',key:key,value:JSON.stringify(val),secret:CLOUD_SECRET})})
+  .then(function(r){return r.json();}).then(function(j){setSync('ok');return j;}).catch(function(){setSync('off');return null;});}
+
 var STORE_KEY="sbs_material_requests_v1";
 var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function fmtDate(s){if(!s)return"—";var p=s.split("-");return (+p[2])+" "+MON[+p[1]-1]+" "+p[0];}
@@ -275,8 +293,13 @@ var STATUS={pending:{label:"Pending",color:"#e39a15",bg:"#fdf3e0",group:"pending
 var PRIO_ORDER={urgent:0,high:1,medium:2,low:3};
 
 var reqs=[];
-function load(){try{var raw=localStorage.getItem(STORE_KEY);if(raw){reqs=JSON.parse(raw);return;}}catch(e){}reqs=[];save();}
-function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(reqs));}catch(e){}}
+function cacheSave(){try{localStorage.setItem(STORE_KEY,JSON.stringify(reqs));}catch(e){}}
+function save(){cacheSave();cloudSet(STORE_KEY,reqs);} // update device cache now, sync to sheet in background
+function load(){ // show cached data first for speed, then refresh from the shared sheet
+  try{var raw=localStorage.getItem(STORE_KEY);if(raw)reqs=JSON.parse(raw);}catch(e){}
+  render();
+  cloudGet(STORE_KEY).then(function(data){if(data===undefined)return;reqs=data||[];cacheSave();render();});
+}
 
 /* populate category selects */
 (function(){['f-cat','fCat'].forEach(function(id){var s=document.getElementById(id);Object.keys(CATS).forEach(function(k){s.innerHTML+='<option value="'+k+'">'+CATS[k].label+'</option>';});});})();
@@ -404,7 +427,7 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 ['formModal','viewModal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id);});});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal('formModal');closeModal('viewModal');closeMenus();toggleNav(false);}});
 
-load();render();
+load();
 </script>
 </body>
 </html>

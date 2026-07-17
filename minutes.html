@@ -168,6 +168,18 @@ tbody tr:last-child td{border-bottom:none;} tbody tr:hover{background:#f9fafe;}
 .sync{display:inline-block;margin-top:10px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;background:#eef1f8;color:#6b7796;}.sync.ok{background:#e6f8ee;color:#16a34a;}.sync.off{background:#fdf3e0;color:#e39a15;}
 .ag-block{padding:9px 0;border-bottom:1px solid var(--line-2);} .ag-block:last-child{border-bottom:none;}
 .ag-topic-txt{font-size:13px;color:var(--ink);font-weight:600;white-space:pre-wrap;line-height:1.55;}
+.sign-hint{font-size:12px;color:var(--muted);margin:-4px 0 10px;}
+.sign-row{display:flex;flex-wrap:wrap;gap:8px;}
+.signchip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer;user-select:none;transition:.15s;}
+.signchip:hover{border-color:var(--muted-2);}
+.signchip.on{background:var(--primary-soft);border-color:var(--primary);color:var(--primary);}
+.signchip .bx{width:18px;height:18px;border:1.6px solid var(--muted-2);border-radius:5px;display:flex;align-items:center;justify-content:center;background:#fff;flex:0 0 18px;}
+.signchip.on .bx{background:var(--primary);border-color:var(--primary);color:#fff;}
+.signchip .bx svg{width:12px;height:12px;stroke-width:2.6;}
+.signchip .si{display:flex;flex-direction:column;line-height:1.2;text-align:left;}
+.signchip .snm{font-size:13px;font-weight:700;}
+.signchip .sst{font-size:10.5px;font-weight:600;color:var(--muted-2);}
+.signchip.on .sst{color:var(--primary);}
 </style>
 </head>
 <body>
@@ -194,7 +206,7 @@ tbody tr:last-child td{border-bottom:none;} tbody tr:hover{background:#f9fafe;}
       <div class="mt-title">Meeting Minutes</div><div style="width:42px"></div>
     </div>
     <div class="topbar">
-      <div class="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9a6 6 0 0 1 12 0c0 5 1.5 6.5 1.5 6.5H4.5S6 14 6 9Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="dot">3</span></div>
+      <div class="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9a6 6 0 0 1 12 0c0 5 1.5 6.5 1.5 6.5H4.5S6 14 6 9Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
       <div class="profile"><div class="avatar">RV</div><div class="who"><div class="nm">Rochelle Vera</div><div class="rl">Head of Department</div></div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6"/></svg></div>
     </div>
 
@@ -423,6 +435,16 @@ function closeModal(){document.getElementById('modal').classList.remove('open');
 document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeMenus();toggleNav(false);}});
 
+var SIGNERS=["Mr Robert","Mr Rene","Ms Hanna","Ms Cheng"];
+function toggleSign(id,name){
+  var m=meetings.find(function(x){return x.id===id;});if(!m)return;
+  if(!m.signedBy)m.signedBy=[]; if(!m.signedAt)m.signedAt={};
+  var i=m.signedBy.indexOf(name);
+  if(i>=0){m.signedBy.splice(i,1);delete m.signedAt[name];}
+  else{m.signedBy.push(name);m.signedAt[name]=new Date().toISOString().slice(0,10);}
+  save();          // persist + sync to the shared sheet
+  viewMeeting(id); // re-open modal with the updated sign-off
+}
 function viewMeeting(id){
   var m=meetings.find(function(x){return x.id===id;});if(!m)return;
   var C=CATS[m.category]||CATS.department;var st=MSTATUS[m.status]||MSTATUS.completed;
@@ -442,7 +464,7 @@ function viewMeeting(id){
     +'<div class="dm-sec"><h4>Details</h4><div class="taglist"><span class="tag">'+C.label+'</span><span class="tag">'+esc(m.location||"—")+'</span></div></div>'
     +'<div class="dm-sec"><h4>Agenda &amp; Actions</h4>'+agHtml+'</div>'
     +'<div class="dm-sec"><h4>Attendees</h4><div class="taglist">'+att+'</div></div>'
-    +'<div class="dm-sec"><h4>Signed by</h4>'+((m.signedBy&&m.signedBy.length)?'<ul class="chklist">'+m.signedBy.map(function(s){return '<li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12l4 4 10-10"/></svg></span>'+esc(s)+'</li>';}).join("")+'</ul>':'<div class="para">Not yet signed.</div>')+'</div>'
+    +'<div class="dm-sec"><h4>Sign-off</h4><p class="sign-hint">Read the minutes above, then tap your name to sign. '+(m.signedBy||[]).filter(function(nm){return SIGNERS.indexOf(nm)>=0;}).length+' of '+SIGNERS.length+' signed.</p><div class="sign-row">'+SIGNERS.map(function(nm){var on=(m.signedBy||[]).indexOf(nm)>=0;var when=(m.signedAt&&m.signedAt[nm])?fmtDate(m.signedAt[nm]):'';return '<div class="signchip'+(on?' on':'')+'" onclick="toggleSign(\''+m.id+'\',\''+nm+'\')"><span class="bx">'+(on?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12l4 4 10-10"/></svg>':'')+'</span><span class="si"><span class="snm">'+esc(nm)+'</span><span class="sst">'+(on?('Signed'+(when?' \u00b7 '+when:'')):'Tap to sign')+'</span></span></div>';}).join("")+'</div></div>'
     +'</div>');
 }
 function openAllItems(){
