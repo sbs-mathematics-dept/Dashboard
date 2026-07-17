@@ -725,19 +725,24 @@ document.querySelectorAll('#sidebar .nav-item').forEach(function(n){
   }
   } // end paint
 
+  // JSONP read — loads via a <script> tag so the browser's CORS rule doesn't block it
+  function jsonp(url,cb){
+    var name='__j'+Math.random().toString(36).slice(2), sc=document.createElement('script'), done=false;
+    var to=setTimeout(function(){ if(!done){done=true;fin();cb(undefined);} },13000);
+    function fin(){clearTimeout(to);try{delete window[name];}catch(e){window[name]=undefined;}if(sc.parentNode)sc.parentNode.removeChild(sc);}
+    window[name]=function(d){ if(done)return; done=true; fin(); cb(d); };
+    sc.onerror=function(){ if(done)return; done=true; fin(); cb(undefined); };
+    sc.src=url+(url.indexOf('?')>=0?'&':'?')+'callback='+name;
+    document.head.appendChild(sc);
+  }
   paint(); // show cached data immediately
-  // Then refresh from the shared Google Sheet (all keys in one request)
-  var _done=false;
-  var _t=setTimeout(function(){ if(!_done) setSync('off'); }, 12000); // don't hang on "Connecting..."
-  fetch(CLOUD_URL+'?secret='+encodeURIComponent(CLOUD_SECRET))
-    .then(function(r){return r.json();})
-    .then(function(j){
-      _done=true; clearTimeout(_t); setSync('ok');
-      var data=(j&&j.ok&&j.data)?j.data:{};
-      KEYS.forEach(function(k){ if(data[k]!==undefined){ try{localStorage.setItem(k,data[k]);}catch(e){} } });
-      paint();
-    })
-    .catch(function(){ _done=true; clearTimeout(_t); setSync('off'); });
+  jsonp(CLOUD_URL+'?secret='+encodeURIComponent(CLOUD_SECRET), function(j){
+    if(j===undefined){ setSync('off'); return; }
+    setSync('ok');
+    var data=(j&&j.ok&&j.data)?j.data:{};
+    KEYS.forEach(function(k){ if(data[k]!==undefined){ try{localStorage.setItem(k,data[k]);}catch(e){} } });
+    paint();
+  });
 })();
 </script>
 <script>
@@ -754,7 +759,12 @@ document.querySelectorAll('#sidebar .nav-item').forEach(function(n){
     if(!list.length){f.innerHTML='<div class="ann-item"><div class="ann-b" style="margin:0">No announcements yet.</div></div>';return;}
     f.innerHTML=list.map(function(a){return '<div class="ann-item real"><div><div class="ann-b" style="margin:0;color:var(--ink)">'+esc(a.text)+'</div><div class="ann-meta">'+esc(a.author||'HOD')+' \u00b7 '+fmtD(a.date)+'</div></div><button class="ann-del" title="Delete" onclick="annDelete(\''+a.id+'\')">&times;</button></div>';}).join('');
   }
-  function cGet(){return fetch(U+'?key='+encodeURIComponent(K)+'&secret='+encodeURIComponent(S)).then(function(r){return r.json();}).then(function(j){if(j&&j.ok&&j.value){try{return JSON.parse(j.value);}catch(e){return null;}}return null;}).catch(function(){return null;});}
+  function jsonp(url){return new Promise(function(res){var name='__a'+Math.random().toString(36).slice(2),sc=document.createElement('script'),done=false;
+    var to=setTimeout(function(){if(!done){done=true;fin();res(undefined);}},13000);
+    function fin(){clearTimeout(to);try{delete window[name];}catch(e){window[name]=undefined;}if(sc.parentNode)sc.parentNode.removeChild(sc);}
+    window[name]=function(d){if(done)return;done=true;fin();res(d);};sc.onerror=function(){if(done)return;done=true;fin();res(undefined);};
+    sc.src=url+(url.indexOf('?')>=0?'&':'?')+'callback='+name;document.head.appendChild(sc);});}
+  function cGet(){return jsonp(U+'?key='+encodeURIComponent(K)+'&secret='+encodeURIComponent(S)).then(function(j){if(j&&j.ok&&j.value){try{return JSON.parse(j.value);}catch(e){return null;}}return null;});}
   function cSet(v){return fetch(U,{method:'POST',body:JSON.stringify({action:'set',key:K,value:JSON.stringify(v),secret:S})}).catch(function(){});}
   window.annToggle=function(show){var c=document.getElementById('annCompose');if(!c)return;c.style.display=show?'flex':'none';
     if(show){var to=document.getElementById('annTo');try{to.value=localStorage.getItem(TO)||'rene.s@sibs.ac.th';}catch(e){}document.getElementById('annText').focus();}};
