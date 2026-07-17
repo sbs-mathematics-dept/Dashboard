@@ -340,7 +340,7 @@ svg{display:block;}
 .ann-compose textarea:focus,.ann-compose input:focus{border-color:var(--primary);}
 .ann-actions{display:flex;gap:8px;flex-wrap:wrap;}
 .ann-actions button{border:none;border-radius:8px;padding:8px 13px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}
-.ann-post{background:var(--primary);color:#fff;} .ann-email{background:#16a34a;color:#fff;} .ann-cancel{background:#f2f4fa;color:var(--muted);font-weight:600;}
+.ann-post{background:var(--primary);color:#fff;} .ann-email{background:#16a34a;color:#fff;} .ann-mail{background:#0ea5e9;color:#fff;} .ann-cancel{background:#f2f4fa;color:var(--muted);font-weight:600;}
 .ann-item.real{justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--line-2);border-radius:0;padding:12px 4px;}
 .ann-item.real:last-child{border-bottom:none;}
 .ann-meta{font-size:11px;color:var(--muted);margin-top:4px;}
@@ -573,10 +573,11 @@ svg{display:block;}
         </div>
         <div class="ann-compose" id="annCompose" style="display:none">
           <textarea id="annText" placeholder="Write an announcement for your team&hellip;"></textarea>
-          <input id="annTo" placeholder="Email list (optional — only if you email instead)">
+          <input id="annTo" placeholder="Emails for &quot;Post &amp; email&quot; (comma-separated)">
           <div class="ann-actions">
             <button class="ann-post" onclick="postAnn(false)">Post</button>
-            <button class="ann-email" onclick="postAnn('chat')">Post &amp; notify Chat</button>
+            <button class="ann-email" onclick="postAnn('chat')">Post &amp; Chat</button>
+            <button class="ann-mail" onclick="postAnn('email')">Post &amp; email</button>
             <button class="ann-cancel" onclick="annToggle(false)">Cancel</button>
           </div>
         </div>
@@ -767,7 +768,7 @@ document.querySelectorAll('#sidebar .nav-item').forEach(function(n){
   function cGet(){return jsonp(U+'?key='+encodeURIComponent(K)+'&secret='+encodeURIComponent(S)).then(function(j){if(j&&j.ok&&j.value){try{return JSON.parse(j.value);}catch(e){return null;}}return null;});}
   function cSet(v){return fetch(U,{method:'POST',body:JSON.stringify({action:'set',key:K,value:JSON.stringify(v),secret:S})}).catch(function(){});}
   window.annToggle=function(show){var c=document.getElementById('annCompose');if(!c)return;c.style.display=show?'flex':'none';
-    if(show){var to=document.getElementById('annTo');try{to.value=localStorage.getItem(TO)||'rene.s@sibs.ac.th';}catch(e){}document.getElementById('annText').focus();}};
+    if(show){var to=document.getElementById('annTo');try{to.value=localStorage.getItem(TO)||'hanna.i@sibs.ac.th, rene.s@sbscm.ac.th, robert.m@sbscm.ac.th';}catch(e){}document.getElementById('annText').focus();}};
   function chatNotify(text){ fetch(U,{method:'POST',body:JSON.stringify({action:'chat',text:'\uD83D\uDCE2 Maths Dept announcement:\n'+text+'\n\u2014 Rochelle Vera (HOD)',secret:S})}).catch(function(){}); }
   window.postAnn=function(notify){
     var text=(document.getElementById('annText').value||'').trim();
